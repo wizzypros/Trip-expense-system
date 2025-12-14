@@ -12,48 +12,92 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeApp() {
     // Initialize data structure if it doesn't exist
-    if (!localStorage.getItem('expenseTrackerData')) {
-        saveData({ groups: [] });
+    if (typeof saveData === 'function') {
+        if (!localStorage.getItem('expenseTrackerData')) {
+            saveData({ groups: [] });
+        }
+    } else {
+        console.error('saveData function not found. Make sure groups.js is loaded before app.js');
     }
 }
 
 function setupEventListeners() {
     // Groups view
-    document.getElementById('create-group-btn').addEventListener('click', showCreateGroupModal);
-    document.getElementById('back-to-groups-btn').addEventListener('click', showGroupsView);
+    const createGroupBtn = document.getElementById('create-group-btn');
+    if (createGroupBtn) {
+        createGroupBtn.addEventListener('click', showCreateGroupModal);
+    }
+    
+    const backBtn = document.getElementById('back-to-groups-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', showGroupsView);
+    }
 
     // Create group modal
-    document.getElementById('create-group-form').addEventListener('submit', handleCreateGroup);
-    document.getElementById('add-initial-member-btn').addEventListener('click', addInitialMember);
+    const createGroupForm = document.getElementById('create-group-form');
+    if (createGroupForm) {
+        createGroupForm.addEventListener('submit', handleCreateGroup);
+    }
+    
+    const addInitialMemberBtn = document.getElementById('add-initial-member-btn');
+    if (addInitialMemberBtn) {
+        addInitialMemberBtn.addEventListener('click', addInitialMember);
+    }
+    
     document.querySelectorAll('.modal-close, .modal-cancel').forEach(btn => {
-        btn.addEventListener('click', closeModals);
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModals();
+        });
     });
 
     // Group detail view
-    document.getElementById('add-member-btn').addEventListener('click', handleAddMember);
-    document.getElementById('new-member-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddMember();
-        }
-    });
-    document.getElementById('add-expense-btn').addEventListener('click', showAddExpenseModal);
+    const addMemberBtn = document.getElementById('add-member-btn');
+    if (addMemberBtn) {
+        addMemberBtn.addEventListener('click', handleAddMember);
+    }
+    
+    const newMemberInput = document.getElementById('new-member-input');
+    if (newMemberInput) {
+        newMemberInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddMember();
+            }
+        });
+    }
+    
+    const addExpenseBtn = document.getElementById('add-expense-btn');
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', showAddExpenseModal);
+    }
 
     // Expense form
-    document.getElementById('add-expense-form').addEventListener('submit', handleSaveExpense);
-    document.querySelectorAll('input[name="distribution"]').forEach(radio => {
+    const expenseForm = document.getElementById('add-expense-form');
+    if (expenseForm) {
+        expenseForm.addEventListener('submit', handleSaveExpense);
+    }
+    
+    const distributionRadios = document.querySelectorAll('input[name="distribution"]');
+    distributionRadios.forEach(radio => {
         radio.addEventListener('change', handleDistributionChange);
     });
-    document.getElementById('expense-amount').addEventListener('input', () => {
-        if (document.querySelector('input[name="distribution"]:checked').value === 'percentage') {
-            updatePercentageDistribution();
-        }
-    });
+    
+    const expenseAmountInput = document.getElementById('expense-amount');
+    if (expenseAmountInput) {
+        expenseAmountInput.addEventListener('input', () => {
+            const checkedRadio = document.querySelector('input[name="distribution"]:checked');
+            if (checkedRadio && checkedRadio.value === 'percentage') {
+                updatePercentageDistribution();
+            }
+        });
+    }
     
     // Update percentage when exclusion changes
     document.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox' && e.target.closest('#exclude-members-list')) {
-            if (document.querySelector('input[name="distribution"]:checked').value === 'percentage') {
+            const checkedRadio = document.querySelector('input[name="distribution"]:checked');
+            if (checkedRadio && checkedRadio.value === 'percentage') {
                 updatePercentageDistribution();
             }
         }
@@ -167,6 +211,13 @@ function closeModals() {
     editingExpenseId = null;
 }
 
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModals();
+    }
+});
+
 function populateExpenseForm(groupId) {
     const group = getGroupById(groupId);
     if (!group) {
@@ -238,8 +289,12 @@ function setupPercentageInputs(members) {
 }
 
 function handleDistributionChange() {
-    const distribution = document.querySelector('input[name="distribution"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="distribution"]:checked');
+    if (!checkedRadio) return;
+    
+    const distribution = checkedRadio.value;
     const percentageGroup = document.getElementById('percentage-inputs-group');
+    if (!percentageGroup) return;
     
     if (distribution === 'percentage') {
         percentageGroup.style.display = 'block';
@@ -362,7 +417,12 @@ function handleSaveExpense(e) {
     const description = document.getElementById('expense-description').value.trim();
     const amount = parseFloat(document.getElementById('expense-amount').value);
     const paidBy = document.getElementById('expense-paid-by').value;
-    const distribution = document.querySelector('input[name="distribution"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="distribution"]:checked');
+    if (!checkedRadio) {
+        alert('Please select a distribution method');
+        return;
+    }
+    const distribution = checkedRadio.value;
     const excluded = Array.from(document.querySelectorAll('#exclude-members-list input:checked'))
         .map(cb => cb.value);
 
@@ -473,7 +533,11 @@ function renderGroupDetail(groupId) {
     renderExpenses(groupId);
     
     // Render settlement
-    renderSettlement(groupId);
+    if (typeof renderSettlement === 'function') {
+        renderSettlement(groupId);
+    } else {
+        console.error('renderSettlement function not found');
+    }
 }
 
 function renderExpenses(groupId) {
