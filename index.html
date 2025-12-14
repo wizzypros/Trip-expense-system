@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Expense Tracker</h1>
+            <p class="subtitle">Track and split expenses easily</p>
+        </header>
+
+        <!-- Groups View -->
+        <div id="groups-view" class="view active">
+            <div class="view-header">
+                <h2>Your Groups</h2>
+                <button id="create-group-btn" class="btn btn-primary">+ Create New Group</button>
+            </div>
+            <div id="groups-list" class="groups-list"></div>
+        </div>
+
+        <!-- Group Detail View -->
+        <div id="group-detail-view" class="view">
+            <div class="view-header">
+                <button id="back-to-groups-btn" class="btn btn-secondary">← Back</button>
+                <h2 id="group-detail-name"></h2>
+            </div>
+            <div id="group-members-section" class="section">
+                <h3>Members</h3>
+                <div id="group-members-list" class="members-list"></div>
+                <div class="add-member-form">
+                    <input type="text" id="new-member-input" placeholder="Enter member name">
+                    <button id="add-member-btn" class="btn btn-small">Add Member</button>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <h3>Expenses</h3>
+                    <button id="add-expense-btn" class="btn btn-primary">+ Add Expense</button>
+                </div>
+                <div id="expenses-list" class="expenses-list"></div>
+            </div>
+            <div id="settlement-section" class="section">
+                <h3>Settlement</h3>
+                <div id="settlement-content"></div>
+            </div>
+        </div>
+
+        <!-- Create Group Modal -->
+        <div id="create-group-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Create New Group</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="create-group-form">
+                    <div class="form-group">
+                        <label for="group-name">Group Name</label>
+                        <input type="text" id="group-name" required placeholder="e.g., Trip to Goa">
+                    </div>
+                    <div class="form-group">
+                        <label>Members</label>
+                        <div id="initial-members-list" class="members-input-list"></div>
+                        <div class="add-member-form">
+                            <input type="text" id="initial-member-input" placeholder="Enter member name">
+                            <button type="button" id="add-initial-member-btn" class="btn btn-small">Add</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Group</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Expense Modal -->
+        <div id="add-expense-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="expense-modal-title">Add Expense</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="add-expense-form">
+                    <div class="form-group">
+                        <label for="expense-description">Description</label>
+                        <input type="text" id="expense-description" required placeholder="e.g., Hotel booking">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-amount">Amount (₹)</label>
+                        <input type="number" id="expense-amount" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-paid-by">Paid By</label>
+                        <select id="expense-paid-by" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Distribution Method</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="distribution" value="equal" checked>
+                                Equal Split
+                            </label>
+                            <label>
+                                <input type="radio" name="distribution" value="percentage">
+                                Percentage Split
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="percentage-inputs-group" style="display: none;">
+                        <label>Percentage Distribution</label>
+                        <div id="percentage-inputs"></div>
+                        <div class="percentage-total">
+                            Total: <span id="percentage-total">0</span>%
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Exclude Members</label>
+                        <div id="exclude-members-list" class="checkbox-list"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Expense</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="groups.js"></script>
+    <script src="expenses.js"></script>
+    <script src="settlement.js"></script>
+</body>
+</html>
+
