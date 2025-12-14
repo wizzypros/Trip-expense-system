@@ -471,16 +471,37 @@ function handleSaveExpense(e) {
         paidBy,
         distribution,
         shares,
-        excluded
+        excluded: excluded || [] // Ensure excluded is always an array
     };
 
+    console.log('Saving expense:', expenseData); // Debug log
+    console.log('Current group ID:', currentGroupId); // Debug log
+    
+    let result;
     if (editingExpenseId) {
-        updateExpense(currentGroupId, editingExpenseId, expenseData);
+        result = updateExpense(currentGroupId, editingExpenseId, expenseData);
+        console.log('Expense updated:', result);
     } else {
-        addExpense(currentGroupId, expenseData);
+        result = addExpense(currentGroupId, expenseData);
+        console.log('Expense added:', result);
+    }
+    
+    if (!result) {
+        alert('Failed to save expense. Please try again.');
+        return;
+    }
+    
+    // Verify the expense was saved by reloading from storage
+    const groupAfterSave = getGroupById(currentGroupId);
+    console.log('Group expenses after save:', groupAfterSave ? groupAfterSave.expenses : 'Group not found');
+    
+    if (groupAfterSave && groupAfterSave.expenses) {
+        console.log('Number of expenses:', groupAfterSave.expenses.length);
     }
 
     closeModals();
+    
+    // Re-render the group detail to show the new expense
     renderGroupDetail(currentGroupId);
 }
 
@@ -494,7 +515,8 @@ function renderGroupsView() {
     }
 
     container.innerHTML = groups.map(group => {
-        const totalExpenses = group.expenses.reduce((sum, e) => sum + e.amount, 0);
+        const expenses = group.expenses || [];
+        const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
         return `
             <div class="group-card" onclick="showGroupDetailView('${group.id}')">
                 <div class="group-card-header">
@@ -542,32 +564,51 @@ function renderGroupDetail(groupId) {
 
 function renderExpenses(groupId) {
     const group = getGroupById(groupId);
-    if (!group) return;
+    if (!group) {
+        console.error('Group not found for ID:', groupId);
+        return;
+    }
 
     const container = document.getElementById('expenses-list');
+    if (!container) {
+        console.error('Expenses list container not found');
+        return;
+    }
+    
+    // Ensure expenses array exists
+    if (!group.expenses || !Array.isArray(group.expenses)) {
+        console.warn('Group expenses is not an array, initializing:', group);
+        group.expenses = [];
+    }
     
     if (group.expenses.length === 0) {
         container.innerHTML = '<p class="empty-state">No expenses yet. Add your first expense!</p>';
         return;
     }
+    
+    console.log('Rendering expenses:', group.expenses); // Debug log
 
     container.innerHTML = group.expenses.map(expense => {
-        const sharesList = Object.entries(expense.shares)
-            .map(([member, amount]) => `${escapeHtml(member)}: ₹${amount.toFixed(2)}`)
+        // Ensure shares and excluded exist
+        const shares = expense.shares || {};
+        const excluded = expense.excluded || [];
+        
+        const sharesList = Object.entries(shares)
+            .map(([member, amount]) => `${escapeHtml(member)}: ₹${parseFloat(amount).toFixed(2)}`)
             .join(', ');
         
         return `
             <div class="expense-card">
                 <div class="expense-header">
                     <div>
-                        <h4>${escapeHtml(expense.description)}</h4>
-                        <p class="expense-meta">Paid by ${escapeHtml(expense.paidBy)} • ${escapeHtml(expense.distribution === 'equal' ? 'Equal' : 'Percentage')} split</p>
+                        <h4>${escapeHtml(expense.description || 'Untitled Expense')}</h4>
+                        <p class="expense-meta">Paid by ${escapeHtml(expense.paidBy || 'Unknown')} • ${escapeHtml(expense.distribution === 'equal' ? 'Equal' : 'Percentage')} split</p>
                     </div>
-                    <div class="expense-amount">₹${expense.amount.toFixed(2)}</div>
+                    <div class="expense-amount">₹${parseFloat(expense.amount || 0).toFixed(2)}</div>
                 </div>
                 <div class="expense-details">
-                    <p><strong>Shares:</strong> ${sharesList}</p>
-                    ${expense.excluded.length > 0 ? `<p><strong>Excluded:</strong> ${expense.excluded.map(e => escapeHtml(e)).join(', ')}</p>` : ''}
+                    <p><strong>Shares:</strong> ${sharesList || 'No shares'}</p>
+                    ${excluded.length > 0 ? `<p><strong>Excluded:</strong> ${excluded.map(e => escapeHtml(e)).join(', ')}</p>` : ''}
                 </div>
                 <div class="expense-actions">
                     <button class="btn btn-small btn-secondary" onclick="showAddExpenseModal('${expense.id}')">Edit</button>

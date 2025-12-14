@@ -7,13 +7,23 @@ function addExpense(groupId, expenseData) {
     const data = getData();
     const group = data.groups.find(g => g.id === groupId);
     if (group) {
+        // Ensure expenses array exists
+        if (!group.expenses || !Array.isArray(group.expenses)) {
+            group.expenses = [];
+        }
+        
         const expense = {
             id: generateId(),
             ...expenseData
         };
         group.expenses.push(expense);
         saveData(data);
+        console.log('Expense added successfully:', expense);
+        console.log('Group expenses now:', group.expenses);
         return expense;
+    } else {
+        console.error('Group not found for ID:', groupId);
+        return null;
     }
 }
 
